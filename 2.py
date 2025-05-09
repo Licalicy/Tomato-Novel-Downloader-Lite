@@ -211,51 +211,76 @@ def down_text(chapter_id, headers, book_id=None):
     except Exception as e:
         print(f"官方API请求失败，尝试备用API: {str(e)}")
     
-# 备用API
-content = ""
-chapter_title = ""
+    # 备用API
+    content = ""
+    chapter_title = ""
 
-# 初始化API端点状态
-if not hasattr(down_text, "api_status"):
-    down_text.api_status = {endpoint: {
-        "last_response_time": float('inf'),
-        "error_count": 0,
-        "last_try_time": 0
-    } for endpoint in CONFIG["api_endpoints"]}
+    # 初始化API端点状态
+    if not hasattr(down_text, "api_status"):
+        down_text.api_status = {endpoint: {
+            "last_response_time": float('inf'),
+            "error_count": 0,
+            "last_try_time": 0
+        } for endpoint in CONFIG["api_endpoints"]}
 
-# 顺序尝试API
-for api_endpoint in CONFIG["api_endpoints"]:
-    current_endpoint = api_endpoint.format(chapter_id=chapter_id)
-    down_text.api_status[api_endpoint]["last_try_time"] = time.time()
-    
-    try:
-        # 随机延迟
-        time.sleep(random.uniform(0.5, 1))
+    # 顺序尝试API
+    for api_endpoint in CONFIG["api_endpoints"]:
+        current_endpoint = api_endpoint.format(chapter_id=chapter_id)
+        down_text.api_status[api_endpoint]["last_try_time"] = time.time()
         
-        start_time = time.time()
-        response = requests.get(
-            current_endpoint, 
-            headers=headers, 
-            timeout=CONFIG["request_timeout"],
-            verify=False
-        )
-        response_time = time.time() - start_time
-        
-        # 更新API状态
-        down_text.api_status[api_endpoint].update({
-            "last_response_time": response_time,
-            "error_count": max(0, down_text.api_status[api_endpoint]["error_count"] - 1)
-        })
-        
-        data = response.json()
-        content = data.get("data", {}).get("content", "")
-        chapter_title = data.get("data", {}).get("title", "")
-        
-        if "api.cenguigui.cn" in api_endpoint:
-            if data.get("code") == 200 and content:
-                # 内容处理
+        try:
+            # 随机延迟
+            time.sleep(random.uniform(0.5, 1))
+            
+            start_time = time.time()
+            response = requests.get(
+                current_endpoint, 
+                headers=headers, 
+                timeout=CONFIG["request_timeout"],
+                verify=False
+            )
+            response_time = time.time() - start_time
+            
+            # 更新API状态
+            down_text.api_status[api_endpoint].update({
+                "last_response_time": response_time,
+                "error_count": max(0, down_text.api_status[api_endpoint]["error_count"] - 1)
+            })
+            
+            data = response.json()
+            content = data.get("data", {}).get("content", "")
+            chapter_title = data.get("data", {}).get("title", "")
+            
+            if "api.cenguigui.cn" in api_endpoint:
+                if data.get("code") == 200 and content:
+                    # 内容处理
+                    content = re.sub(r'<header>.*?</header>', '', content, flags=re.DOTALL)
+                    content = re.sub(r'<footer>.*?</footer>', '', content, flags=re.DOTALL)
+                    content = re.sub(r'</?article>', '', content)
+                    content = re.sub(r'<p idx="\d+">', '\n', content)
+                    content = re.sub(r'</p>', '\n', content)
+                    content = re.sub(r'<[^>]+>', '', content)
+                    content = re.sub(r'\\u003c|\\u003e', '', content)
+                    
+                    # 去掉重复标题
+                    if chapter_title and content.startswith(chapter_title):
+                        content = content[len(chapter_title):].lstrip()
+                    
+                    content = re.sub(r'\n{2,}', '\n', content).strip()
+                    formatted_content = '\n'.join(['    ' + line if line.strip() else line for line in content.split('\n')])
+                    return chapter_title, formatted_content
+
+            elif "lsjk.zyii.xyz" in api_endpoint and content:
+                # 提取内容
+                paragraphs = re.findall(r'<p idx="\d+">(.*?)</p>', content)
+                cleaned_content = "\n".join(p.strip() for p in paragraphs if p.strip())
+                formatted_content = '\n'.join('    ' + line if line.strip() else line 
+                                              for line in cleaned_content.split('\n'))
+                return chapter_title, formatted_content
+                
+            elif "jingluo.love" in api_endpoint and content:
+                # 处理内容
                 content = re.sub(r'<header>.*?</header>', '', content, flags=re.DOTALL)
-                content = re.sub(r'<footer>.*?</footer>', '', content, flags=re.DOTALL)
                 content = re.sub(r'</?article>', '', content)
                 content = re.sub(r'<p idx="\d+">', '\n', content)
                 content = re.sub(r'</p>', '\n', content)
@@ -270,38 +295,13 @@ for api_endpoint in CONFIG["api_endpoints"]:
                 formatted_content = '\n'.join(['    ' + line if line.strip() else line for line in content.split('\n')])
                 return chapter_title, formatted_content
 
-        elif "lsjk.zyii.xyz" in api_endpoint and content:
-            # 提取内容
-            paragraphs = re.findall(r'<p idx="\d+">(.*?)</p>', content)
-            cleaned_content = "\n".join(p.strip() for p in paragraphs if p.strip())
-            formatted_content = '\n'.join('    ' + line if line.strip() else line 
-                                          for line in cleaned_content.split('\n'))
-            return chapter_title, formatted_content
-            
-        elif "jingluo.love" in api_endpoint and content:
-            # 处理内容
-            content = re.sub(r'<header>.*?</header>', '', content, flags=re.DOTALL)
-            content = re.sub(r'</?article>', '', content)
-            content = re.sub(r'<p idx="\d+">', '\n', content)
-            content = re.sub(r'</p>', '\n', content)
-            content = re.sub(r'<[^>]+>', '', content)
-            content = re.sub(r'\\u003c|\\u003e', '', content)
-            
-            # 去掉重复标题
-            if chapter_title and content.startswith(chapter_title):
-                content = content[len(chapter_title):].lstrip()
-            
-            content = re.sub(r'\n{2,}', '\n', content).strip()
-            formatted_content = '\n'.join(['    ' + line if line.strip() else line for line in content.split('\n')])
-            return chapter_title, formatted_content
+            print(f"API端点 {api_endpoint} 返回空内容，继续尝试下一个API...")
+            down_text.api_status[api_endpoint]["error_count"] += 1
 
-        print(f"API端点 {api_endpoint} 返回空内容，继续尝试下一个API...")
-        down_text.api_status[api_endpoint]["error_count"] += 1
-
-    except Exception as e:
-        print(f"API端点 {api_endpoint} 请求失败: {str(e)}")
-        down_text.api_status[api_endpoint]["error_count"] += 1
-        time.sleep(3)
+        except Exception as e:
+            print(f"API端点 {api_endpoint} 请求失败: {str(e)}")
+            down_text.api_status[api_endpoint]["error_count"] += 1
+            time.sleep(3)
 
     print(f"所有API尝试失败，无法下载章节 {chapter_id}")
     return None, None
