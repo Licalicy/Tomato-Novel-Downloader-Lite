@@ -567,7 +567,7 @@ def Run(book_id, save_path):
 def main():
     print("""欢迎使用番茄小说下载器精简版！
 作者：Dlmos（Dlmily）
-当前版本：v1.6.6.4
+当前版本：v1.6.6.5
 Github：https://github.com/Dlmily/Tomato-Novel-Downloader-Lite
 赞助/了解新产品：https://afdian.com/a/dlbaokanluntanos
 *使用前须知*：开始下载之后，您可能会过于着急而查看下载文件的位置，这是徒劳的，请耐心等待小说下载完成再查看！另外如果你要下载之前已经下载过的小说(在此之前已经删除了原txt文件)，那么你有可能会遇到"所有章节已是最新，无需下载"的情况，这时就请删除掉chapter.json，然后再次运行程序。
