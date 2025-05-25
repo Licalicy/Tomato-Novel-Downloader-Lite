@@ -9,6 +9,9 @@ import urllib3
 import threading
 import signal
 import sys
+import stem
+from stem import Signal
+from stem.control import Controller
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
 from collections import OrderedDict
@@ -25,121 +28,124 @@ from urllib.parse import urlencode
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 requests.packages.urllib3.disable_warnings()
 
-okp = [
-    "ac25", "c67d", "dd8f", "38c1", 
-    "b37a", "2348", "828e", "222e"
-]
+# 添加Tor配置
+TOR_CONFIG = {
+    "enabled": False,
+    "proxy_port": 9050,
+    "max_retries": 3,
+    "change_ip_after": 980,
+    "request_timeout": 35
+}
 
-def grk():
-    return "".join(okp)
+# 初始化请求计数器
+request_counter = 0
 
-class FqCrypto:
-    def __init__(self, key):
-        self.key = bytes.fromhex(key)
-        if len(self.key) != 16:
-            raise ValueError(f"Key length mismatch! key: {self.key.hex()}")
-        self.cipher_mode = AES.MODE_CBC
+def get_tor_session():
+    """创建新的Tor会话"""
+    session = requests.session()
+    session.proxies = {
+        'http': f'socks5h://127.0.0.1:{TOR_CONFIG["proxy_port"]}',
+        'https': f'socks5h://127.0.0.1:{TOR_CONFIG["proxy_port"]}'
+    }
+    return session
 
-    def encrypt(self, data, iv):
-        cipher = AES.new(self.key, self.cipher_mode, iv)
-        ct_bytes = cipher.encrypt(pad(data, AES.block_size))
-        return ct_bytes
+def renew_tor_ip():
+    """重建会话"""
+    if not TOR_CONFIG["enabled"]:
+        return
+        
+    print("正在重建Tor会话更换IP...")
+    global request_counter
+    request_counter = 0
+    time.sleep(5)
+    print("IP更换完成")
 
-    def decrypt(self, data):
-        iv = data[:16]
-        ct = data[16:]
-        cipher = AES.new(self.key, self.cipher_mode, iv)
-        pt = unpad(cipher.decrypt(ct), AES.block_size)
-        return pt
+def check_tor_connection():
+    """检查Tor连接是否正常"""
+    try:
+        session = get_tor_session()
+        response = session.get(
+            "https://check.torproject.org/",
+            timeout=TOR_CONFIG["request_timeout"]
+        )
+        if "Congratulations" in response.text:
+            print("Tor连接成功!")
+            return True
+    except Exception as e:
+        print(f"Tor连接检查失败: {str(e)}")
+    return False
 
-    def new_register_key_content(self, server_device_id, str_val):
-        if not str_val.isdigit() or not server_device_id.isdigit():
-            raise ValueError(f"Parse failed\nserver_device_id: {server_device_id}\nstr_val:{str_val}")
-        combined_bytes = int(server_device_id).to_bytes(8, byteorder='little') + int(str_val).to_bytes(8, byteorder='little')
-        iv = get_random_bytes(16)
-        enc_data = self.encrypt(combined_bytes, iv)
-        combined_bytes = iv + enc_data
-        return base64.b64encode(combined_bytes).decode('utf-8')
+def enable_tor_support():
+    """启用Tor支持"""
+    TOR_CONFIG["enabled"] = True
+    print("正在启用Tor支持...")
+    if check_tor_connection():
+        print("Tor支持已启用!")
+        return True
+    else:
+        print("无法连接到Tor网络，请确保Tor服务正在运行，将不能正常下载章节！")
+        TOR_CONFIG["enabled"] = False
+        return False
 
-class FqVariable:
-    def __init__(self, install_id, server_device_id, aid, update_version_code):
-        self.install_id = install_id
-        self.server_device_id = server_device_id
-        self.aid = aid
-        self.update_version_code = update_version_code
-
-class FqReq:
-    def __init__(self, var):
-        self.var = var
-        self.session = requests.Session()
-
-    def batch_get(self, item_ids, download=False):
-        headers = {
-            "Cookie": f"install_id={self.var.install_id}"
+def make_request(url, headers=None, params=None, data=None, method='GET', verify=False, use_tor=False, timeout=None):
+    """通用的请求函数"""
+    global request_counter
+    
+    if headers is None:
+        headers = get_headers()
+    
+    session = None
+    if use_tor and TOR_CONFIG["enabled"]:
+        session = get_tor_session()
+        # 计数器逻辑
+        request_counter += 1
+        if request_counter % TOR_CONFIG["change_ip_after"] == 0:
+            renew_tor_ip()
+    else:
+        session = requests.Session()
+    
+    try:
+        request_params = {
+            'headers': headers,
+            'params': params,
+            'verify': verify,
+            'timeout': timeout if timeout is not None else TOR_CONFIG["request_timeout"]
         }
-        url = "https://api5-normal-sinfonlineb.fqnovel.com/reading/reader/batch_full/v"
-        params = {
-            "item_ids": item_ids,
-            "req_type": "0" if download else "1",
-            "aid": self.var.aid,
-            "update_version_code": self.var.update_version_code
-        }
-        response = self.session.get(url, headers=headers, params=params, verify=False)
-        response.raise_for_status()
-        ret_arr = response.json()
-        return ret_arr
+        
+        if data:
+            request_params['data'] = data
 
-    def get_register_key(self):
-        headers = {
-            "Cookie": f"install_id={self.var.install_id}",
-            "Content-Type": "application/json"
-        }
-        url = "https://api5-normal-sinfonlineb.fqnovel.com/reading/crypt/registerkey"
-        params = {
-            "aid": self.var.aid
-        }
-        crypto = FqCrypto(grk())
-        payload = json.dumps({
-            "content": crypto.new_register_key_content(self.var.server_device_id, "0"),
-            "keyver": 1
-        }).encode('utf-8')
-        response = self.session.post(url, headers=headers, params=params, data=payload, verify=False)
-        response.raise_for_status()
-        ret_arr = response.json()
-        key_str = ret_arr['data']['key']
-        byte_key = crypto.decrypt(base64.b64decode(key_str))
-        return byte_key.hex()
-
-    def get_decrypt_contents(self, res_arr):
-        key = self.get_register_key()
-        crypto = FqCrypto(key)
-        for item_id, content in res_arr['data'].items():
-            byte_content = crypto.decrypt(base64.b64decode(content['content']))
-            s = gzip.decompress(byte_content).decode('utf-8')
-            res_arr['data'][item_id]['originContent'] = s
-        return res_arr
-
-    def __del__(self):
-        self.session.close()
+        if method.upper() == 'GET':
+            response = session.get(url, **request_params)
+        elif method.upper() == 'POST':
+            response = session.post(url, **request_params)
+        else:
+            raise ValueError(f"不支持的HTTP方法: {method}")
+        
+        return response
+    except Exception as e:
+        print(f"请求失败: {str(e)}")
+        if use_tor and TOR_CONFIG["enabled"]:
+            renew_tor_ip()
+            return make_request(url, headers, params, data, method, verify, use_tor, timeout)
+        raise
 
 # 全局配置
 CONFIG = {
-    "max_workers": 3,
+    "max_workers": 5,
     "max_retries": 3,
     "request_timeout": 15,
     "status_file": "chapter.json",
     "request_rate_limit": 0.4,
     "api_endpoints": [
+        "https://fqphp.gxom.cn/content?item_id={chapter_id}",
         "https://api.cenguigui.cn/api/tomato/content.php?item_id={chapter_id}",
         "https://lsjk.zyii.xyz:3666/content?item_id={chapter_id}",
         "http://nu1.jingluo.love/content?item_id={chapter_id}",
         "http://nu2.jingluo.love/content?item_id={chapter_id}"
     ],
-    "official_api": {
-        "install_id": "4427064614339001",
-        "server_device_id": "4427064614334905",
-        "aid": "1967",
-        "update_version_code": "62532"
+    "api_keys": {
+        "fqphp.gxom.cn": "BkmpOhGYbhFv"
     }
 }
 
@@ -161,57 +167,37 @@ def get_headers() -> Dict[str, str]:
         "X-Requested-With": "XMLHttpRequest",
     }
 
+def extract_chapters(soup):
+    """解析章节列表"""
+    chapters = []
+    for idx, item in enumerate(soup.select('div.chapter-item')):
+        a_tag = item.find('a')
+        if not a_tag:
+            continue
+        
+        raw_title = a_tag.get_text(strip=True)
+        
+        # 特殊章节
+        if re.match(r'^(番外|特别篇|if线)\s*', raw_title):
+            final_title = raw_title
+        else:
+            clean_title = re.sub(
+                r'^第[一二三四五六七八九十百千\d]+章\s*',
+                '', 
+                raw_title
+            ).strip()
+            final_title = f"第{idx+1}章 {clean_title}"
+        
+        chapters.append({
+            "id": a_tag['href'].split('/')[-1],
+            "title": final_title,
+            "url": f"https://fanqienovel.com{a_tag['href']}",
+            "index": idx
+        })
+    return chapters
+
 def down_text(chapter_id, headers, book_id=None):
     """下载章节内容"""
-    try:
-        if hasattr(down_text, "last_request_time"):
-            elapsed = time.time() - down_text.last_request_time
-            if elapsed < CONFIG["request_rate_limit"]:
-                time.sleep(CONFIG["request_rate_limit"] - elapsed)
-        down_text.last_request_time = time.time()
-
-        var = FqVariable(
-            CONFIG["official_api"]["install_id"],
-            CONFIG["official_api"]["server_device_id"],
-            CONFIG["official_api"]["aid"],
-            CONFIG["official_api"]["update_version_code"]
-        )
-        client = FqReq(var)
-        batch_res_arr = client.batch_get(chapter_id, False)
-        res = client.get_decrypt_contents(batch_res_arr)
-
-        for k, v in res['data'].items():
-            content = v['originContent']
-            chapter_title = v['title']
-            
-            # 处理标题
-            if chapter_title and re.match(r'^第[0-9]+章', chapter_title):
-                chapter_title = re.sub(r'^第[0-9]+章\s*', '', chapter_title)
-            
-            # 处理内容
-            content = re.sub(r'<header>.*?</header>', '', content, flags=re.DOTALL)
-            content = re.sub(r'<footer>.*?</footer>', '', content, flags=re.DOTALL)
-            content = re.sub(r'</?article>', '', content)
-            content = re.sub(r'<p[^>]*>', '\n    ', content)
-            content = re.sub(r'</p>', '', content)
-            content = re.sub(r'<[^>]+>', '', content)
-            content = re.sub(r'\\u003c|\\u003e', '', content)
-            
-            # 处理重复章节标题
-            if chapter_title and content.startswith(chapter_title):
-                content = content[len(chapter_title):].lstrip()
-
-            content = re.sub(r'\n{3,}', '\n\n', content).strip()
-
-            lines = [line.strip() for line in content.split('\n') if line.strip()]
-            formatted_content = '\n'.join(['    ' + line for line in lines])
-            
-            return chapter_title, formatted_content
-            
-    except Exception as e:
-        print(f"官方API请求失败，尝试备用API: {str(e)}")
-    
-    # 备用API
     content = ""
     chapter_title = ""
 
@@ -230,18 +216,23 @@ def down_text(chapter_id, headers, book_id=None):
         
         try:
             # 随机延迟
-            time.sleep(random.uniform(0.5, 1))
+            time.sleep(random.uniform(0.1, 0.5))
+            
+            # 添加密钥参数
+            if "fqphp.gxom.cn" in api_endpoint:
+                separator = "&" if "?" in current_endpoint else "?"
+                current_endpoint += f"{separator}key={CONFIG['api_keys']['fqphp.gxom.cn']}"
             
             start_time = time.time()
-            response = requests.get(
+            response = make_request(
                 current_endpoint, 
-                headers=headers, 
+                headers=headers.copy(),
                 timeout=CONFIG["request_timeout"],
-                verify=False
+                verify=False,
+                use_tor=True
             )
-            response_time = time.time() - start_time
             
-            # 更新API状态
+            response_time = time.time() - start_time
             down_text.api_status[api_endpoint].update({
                 "last_response_time": response_time,
                 "error_count": max(0, down_text.api_status[api_endpoint]["error_count"] - 1)
@@ -250,32 +241,48 @@ def down_text(chapter_id, headers, book_id=None):
             data = response.json()
             content = data.get("data", {}).get("content", "")
             chapter_title = data.get("data", {}).get("title", "")
+
+            if "fqphp.gxom.cn" in api_endpoint and content:
+                # 处理内容
+                if len(content) > 20:
+                    content = content[:-20]
+                
+                content = re.sub(r'<header>.*?</header>', '', content, flags=re.DOTALL)
+                content = re.sub(r'<footer>.*?</footer>', '', content, flags=re.DOTALL)
+                content = re.sub(r'</?article>', '', content)
+                content = re.sub(r'<p[^>]*>', '\n    ', content)
+                content = re.sub(r'</p>', '', content)
+                content = re.sub(r'<[^>]+>', '', content)
+                content = re.sub(r'\\u003c|\\u003e', '', content)
+                
+                content = re.sub(r'\n{3,}', '\n\n', content).strip()
+                lines = [line.strip() for line in content.split('\n') if line.strip()]
+                formatted_content = '\n'.join(['    ' + line for line in lines])
+                return chapter_title, formatted_content
             
-            if "api.cenguigui.cn" in api_endpoint:
-                if data.get("code") == 200 and content:
-                    # 内容处理
-                    content = re.sub(r'<header>.*?</header>', '', content, flags=re.DOTALL)
-                    content = re.sub(r'<footer>.*?</footer>', '', content, flags=re.DOTALL)
-                    content = re.sub(r'</?article>', '', content)
-                    content = re.sub(r'<p idx="\d+">', '\n', content)
-                    content = re.sub(r'</p>', '\n', content)
-                    content = re.sub(r'<[^>]+>', '', content)
-                    content = re.sub(r'\\u003c|\\u003e', '', content)
-                    
-                    # 去掉重复标题
-                    if chapter_title and content.startswith(chapter_title):
-                        content = content[len(chapter_title):].lstrip()
-                    
-                    content = re.sub(r'\n{2,}', '\n', content).strip()
-                    formatted_content = '\n'.join(['    ' + line if line.strip() else line for line in content.split('\n')])
-                    return chapter_title, formatted_content
+            elif "api.cenguigui.cn" in api_endpoint and data.get("code") == 200 and content:
+                # 处理内容
+                content = re.sub(r'<header>.*?</header>', '', content, flags=re.DOTALL)
+                content = re.sub(r'<footer>.*?</footer>', '', content, flags=re.DOTALL)
+                content = re.sub(r'</?article>', '', content)
+                content = re.sub(r'<p idx="\d+">', '\n', content)
+                content = re.sub(r'</p>', '\n', content)
+                content = re.sub(r'<[^>]+>', '', content)
+                content = re.sub(r'\\u003c|\\u003e', '', content)
+                
+                if chapter_title and content.startswith(chapter_title):
+                    content = content[len(chapter_title):].lstrip()
+                
+                content = re.sub(r'\n{2,}', '\n', content).strip()
+                formatted_content = '\n'.join(['    ' + line if line.strip() else line for line in content.split('\n')])
+                return chapter_title, formatted_content
 
             elif "lsjk.zyii.xyz" in api_endpoint and content:
-                # 提取内容
+                # 处理内容
                 paragraphs = re.findall(r'<p idx="\d+">(.*?)</p>', content)
                 cleaned_content = "\n".join(p.strip() for p in paragraphs if p.strip())
                 formatted_content = '\n'.join('    ' + line if line.strip() else line 
-                                              for line in cleaned_content.split('\n'))
+                                            for line in cleaned_content.split('\n'))
                 return chapter_title, formatted_content
                 
             elif "jingluo.love" in api_endpoint and content:
@@ -287,7 +294,6 @@ def down_text(chapter_id, headers, book_id=None):
                 content = re.sub(r'<[^>]+>', '', content)
                 content = re.sub(r'\\u003c|\\u003e', '', content)
                 
-                # 去掉重复标题
                 if chapter_title and content.startswith(chapter_title):
                     content = content[len(chapter_title):].lstrip()
                 
@@ -307,38 +313,44 @@ def down_text(chapter_id, headers, book_id=None):
     return None, None
         
 def get_chapters_from_api(book_id, headers):
-    """从API获取章节列表"""
-    url = f"https://fanqienovel.com/api/reader/directory/detail?bookId={book_id}"
+    """从API获取章节列表（包含完整标题）"""
     try:
-        response = requests.get(url, headers=headers, timeout=CONFIG["request_timeout"])
-        if response.status_code != 200:
-            print(f"获取章节列表失败，状态码: {response.status_code}")
-            return None
-
-        data = response.json()
-        if data.get("code") != 0:
-            print(f"API返回错误: {data.get('message', '未知错误')}")
-            return None
-
-        chapters = []
-        chapter_ids = data.get("data", {}).get("allItemIds", [])
+        # 获取章节列表
+        page_url = f'https://fanqienovel.com/page/{book_id}'
+        response = requests.get(page_url, headers=headers, timeout=CONFIG["request_timeout"])
+        soup = bs4.BeautifulSoup(response.text, 'html.parser')
+        chapters = extract_chapters(soup)  
         
-        # 创建章节列表
+        # 获取章节ID顺序
+        api_url = f"https://fanqienovel.com/api/reader/directory/detail?bookId={book_id}"
+        api_response = requests.get(api_url, headers=headers, timeout=CONFIG["request_timeout"])
+        api_data = api_response.json()
+        chapter_ids = api_data.get("data", {}).get("allItemIds", [])
+        
+        # 合并数据
+        final_chapters = []
         for idx, chapter_id in enumerate(chapter_ids):
-            if not chapter_id:
-                continue
-                
-            final_title = f"第{idx+1}章"
+            # 查找网页解析的对应章节
+            web_chapter = next((ch for ch in chapters if ch["id"] == chapter_id), None)
             
-            chapters.append({
-                "id": chapter_id,
-                "title": final_title,
-                "index": idx
-            })
+            if web_chapter:
+                # 使用网页解析的完整标题
+                final_chapters.append({
+                    "id": chapter_id,
+                    "title": web_chapter["title"],
+                    "index": idx
+                })
+            else:
+                final_chapters.append({
+                    "id": chapter_id,
+                    "title": f"第{idx+1}章",
+                    "index": idx
+                })
         
-        return chapters
+        return final_chapters
+        
     except Exception as e:
-        print(f"从API获取章节列表失败: {str(e)}")
+        print(f"获取章节列表失败: {str(e)}")
         return None
 
 def download_chapter(chapter, headers, save_path, book_name, downloaded, book_id):
@@ -346,19 +358,17 @@ def download_chapter(chapter, headers, save_path, book_name, downloaded, book_id
     if chapter["id"] in downloaded:
         return None
     
-    chapter_title, content = down_text(chapter["id"], headers, book_id)
+    # 获取内容
+    _, content = down_text(chapter["id"], headers, book_id)
     
     if content:
         output_file_path = os.path.join(save_path, f"{book_name}.txt")
         try:
             with open(output_file_path, 'a', encoding='utf-8') as f:
-                if chapter_title:
-                    f.write(f'{chapter["title"]} {chapter_title}\n')
-                else:
-                    f.write(f'{chapter["title"]}\n')
+                # 直接使用预先获取的完整标题
+                f.write(f'{chapter["title"]}\n')
                 f.write(content + '\n\n')
             
-            # 立即更新下载状态
             downloaded.add(chapter["id"])
             save_status(save_path, downloaded)
             return chapter["index"], content
@@ -567,14 +577,26 @@ def Run(book_id, save_path):
 def main():
     print("""欢迎使用番茄小说下载器精简版！
 作者：Dlmos（Dlmily）
-当前版本：v1.6.6.5
+当前版本：v1.7 (预发布版)
 Github：https://github.com/Dlmily/Tomato-Novel-Downloader-Lite
 赞助/了解新产品：https://afdian.com/a/dlbaokanluntanos
-*使用前须知*：开始下载之后，您可能会过于着急而查看下载文件的位置，这是徒劳的，请耐心等待小说下载完成再查看！另外如果你要下载之前已经下载过的小说(在此之前已经删除了原txt文件)，那么你有可能会遇到"所有章节已是最新，无需下载"的情况，这时就请删除掉chapter.json，然后再次运行程序。
+*使用前须知*：
+    1.开始下载之后，您可能会过于着急而查看下载文件的位置，这是徒劳的，请耐心等待小说下载完成再查看！另外如果你要下载之前已经下载过的小说(在此之前已经删除了原txt文件)，那么你有可能会遇到"所有章节已是最新，无需下载"的情况，这时就请删除掉chapter.json，然后再次运行程序。
+    2.强制使用了Tor网络进行下载，原因是能够很好地防止Api开发者封ip，所以请下载Orbot！
 
 另：如果有另外的api，按照您的意愿投到“Issues”页中。
 ------------------------------------------""")
+
+    print("\n注意：本版本强制使用Tor网络进行下载，请确保已安装并启动Tor服务！")
+    use_tor = input("是否要测试Tor网络环境(y/n):").strip().lower()
+    if use_tor != 'y':
+        print("必须测试并启用Tor网络才能继续使用下载功能！")
+        return
     
+    if not enable_tor_support():
+        print("无法连接到Tor网络，程序退出")
+        return
+
     while True:
         book_id = input("请输入小说ID（输入q退出）：").strip()
         if book_id.lower() == 'q':
@@ -588,6 +610,6 @@ Github：https://github.com/Dlmily/Tomato-Novel-Downloader-Lite
             print(f"运行错误: {str(e)}")
         
         print("\n" + "="*50 + "\n")
-
+        
 if __name__ == "__main__":
     main()
