@@ -76,6 +76,9 @@ Ctrl+C中断程序（先按Ctrl再按C，多试几次就能中断程序了
 <details>  
 <summary>点击展开</summary>  
   
+  (运行2.py脚本前需要关闭系统代理，再使用tor网络下载。注意端口为9050！)
+  ![](https://github.com/user-attachments/assets/fb6f1880-09b1-46db-94ce-d3b666bb04ef)
+  
 ### **1. Windows系统使用Tor网络**
 #### **方法一：使用Tor浏览器（推荐）**
 1. **下载并安装Tor浏览器**  
