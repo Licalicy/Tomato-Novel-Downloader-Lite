@@ -72,16 +72,17 @@ CFLAGS="-O0" pip install lxml
 Ctrl+C中断程序（先按Ctrl再按C，多试几次就能中断程序了
 
 9.`Tor网络怎么使用`
-> [!TIP]
-> 建议您用Snowflake并尝试在Tor浏览器中打开任意网页，查看是否可以使用Tor网络连接，然后再尝试运行2.py
 
 手机端：
 首先下载“Orbot”，安装完成后打开，点击“配置连接方式”，在弹出的页面中点击“询问TOR”，程序会自动为您匹配最适合当前地区的连接方式，然后点击“连接”，等待即可。当然如果你要将TOR网络流量集中的话，连接完成后点击“选择应用”，在弹出的应用列表中勾选“Termux”，然后保存即可。
 
 电脑端(多系统)：
+> [!TIP]
+> 
+> 建议您用Snowflake进行连接，并尝试在Tor浏览器中打开任意网页，查看是否可以使用Tor网络连接，然后再尝试运行2.py
 <details>  
 <summary>点击展开</summary>  
-  
+
   (运行2.py脚本前需要关闭系统代理，再使用tor网络下载。注意端口为9050！)
   ![](https://github.com/user-attachments/assets/fb6f1880-09b1-46db-94ce-d3b666bb04ef)
   
