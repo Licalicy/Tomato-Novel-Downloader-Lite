@@ -4,3 +4,5 @@ lxml
 tqdm
 fake-useragent
 pycryptodome
+stem
+urllib3
