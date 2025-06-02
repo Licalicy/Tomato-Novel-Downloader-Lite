@@ -188,7 +188,9 @@ Ctrl+C中断程序（先按Ctrl再按C，多试几次就能中断程序了
 
 感谢来自Github用户@hailey07的cookie！
 
-感谢来自Github用户@永恒231
+感谢Github用户@Eternity231的代码协助！
+
+感谢来自Github用户@helloplhm-qwq的api！
 
 感谢来自[此项目](https://github.com/POf-L/Fanqie-novel-Downloader) 的api！
 
