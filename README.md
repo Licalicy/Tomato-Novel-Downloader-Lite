@@ -168,10 +168,22 @@ Ctrl+C中断程序（先按Ctrl再按C，多试几次就能中断程序了
 >划重点：切记！不能将此程序用于违法用途，例如将下载到的小说进行转载、给不良人员分享此程序使用等。本开发者严禁不支持这样做！！！并且请不要将api进行转载使用，除非您已经与开发者协商过，否则后果自负！下载到的小说仅供自行阅读，看完之后请立即删除文件，以免造成侵权，如果您还是偷尝禁果，需自行承担由此引发的任何法律责任和风险。程序的作者及项目贡献者不对因使用本程序所造成的任何损失、损害或法律后果负责！
 
 ## 赞助/了解新产品
-~[DL报刊论坛](https://afdian.com/a/dlbaokanluntanos)
+~[DL报刊论坛](https://dlbkltos.s7123.xyz/)
 
 ~[小米手环七图像转换工具](https://github.com/Dlmily/ImageToMiBand7)
 
+<details> 
+<summary>爱发电/支付宝赞助</summary>
+
+![Screenshot_20250603-212900](https://github.com/user-attachments/assets/be19f902-b5fc-4ee6-8d6c-f65fd499ae42)
+
+![IMG_20250603_211957](https://github.com/user-attachments/assets/aca33677-cc92-4fb1-acc3-e7bf600d028e)
+
+</details>
+
+>[!IMPORTANT]
+>
+>赞助前须知：是否赞助全凭用户您自行选择，不提供退款服务，所以请注意赞助的金额！
 ## 免责声明
   本程序仅供 Python 网络爬虫技术、网页数据处理及相关研究的学习用途。请勿将其用于任何违反法律法规或侵犯他人权益的活动。
   
