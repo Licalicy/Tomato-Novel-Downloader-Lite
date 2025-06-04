@@ -281,7 +281,7 @@ def batch_download_chapters(item_ids, headers):
             return None
             
     except Exception as e:
-        print(f"批量下载异常: {str(e)}")
+        print(f"批量下载异常！")
         return None
 
 def process_chapter_content(content):
@@ -343,7 +343,7 @@ def down_text(chapter_id, headers, book_id=None):
             response_time = time.time() - start_time
             down_text.api_status[endpoint["url"]].update({
                 "last_response_time": response_time,
-                "error_count": max(0, down_text.api_status[endpoint["url"]]["error_count"] - 1)
+                "error_count": max(0, down_text.api_status[endpoint["name"]]["error_count"] - 1)
             })
             
             data = response.json()
@@ -371,11 +371,11 @@ def down_text(chapter_id, headers, book_id=None):
                 return chapter_title, processed_content
 
             print(f"API返回空内容，继续尝试下一个API...")
-            down_text.api_status[endpoint["url"]]["error_count"] += 1
+            down_text.api_status[endpoint["name"]]["error_count"] += 1
 
         except Exception as e:
-            print(f"API请求失败: {str(e)}")
-            down_text.api_status[endpoint["url"]]["error_count"] += 1
+            print(f"API请求失败！")
+            down_text.api_status[endpoint["name"]]["error_count"] += 1
             time.sleep(3)
 
     print(f"所有API尝试失败，无法下载章节 {chapter_id}")
