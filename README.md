@@ -57,7 +57,7 @@ CFLAGS="-O0" pip install lxml
 >如果你说：“啊？这些英文加斜杠是什么意思啊？我该在哪里找到它呀？”像这种伸手党的问题，这里不予解释，请参考下面的智慧提问思维导图：
 > ![d076202f80bb19bd](https://github.com/user-attachments/assets/dbbc57b3-9974-48b3-8fc8-35dce1f72059)
 
-3.在Termux中依次运行安装命令：
+3.在Termux中依次输入安装命令并回车运行：
 ```bash
 sed -i 's@^\(deb.*stable main\)$@#\1\ndeb https://mirrors.tuna.tsinghua.edu.cn/termux/apt/termux-main stable main@' $PREFIX/etc/apt/sources.list
 ```
