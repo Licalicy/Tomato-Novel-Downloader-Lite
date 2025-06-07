@@ -71,6 +71,9 @@ apt update && apt upgrade
 pkg install python
 ```
 ```
+pkg install python-pip
+```
+```
 pip install requests beautifulsoup4 urllib3 stem tqdm fake-useragent pycryptodome
 ```
 **注：在运行安装命令的时候，您可能会遇到“Do you want to continue? [Y/n]”这种情况，这时请输入大写的“Y”并回车来继续下载。**
