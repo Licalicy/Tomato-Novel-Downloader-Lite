@@ -42,8 +42,8 @@ CFLAGS="-O0" pip install lxml
 （先运行安装命令后再进行以上操作）
 
 <details> 
-<summary>详细到幼儿园小朋友也能学会的教程</summary>
-
+<summary>详细到幼儿园小朋友也能学会的教程
+</summary>
 
 1.首先下载[Termux](https://github.com/termux/termux-app/releases/tag/v0.118.1) ，找到符合您手机配置的apk文件，下载并安装，接着打开应用，然后输入“termux-setup-storage”并回车(也就是换行符)。执行后，系统会弹出一个权限请求，请点击“允许”来获取存储权限。
 
@@ -71,6 +71,8 @@ pkg install python
 ```
 pip install requests beautifulsoup4 urllib3 stem tqdm fake-useragent pycryptodome
 ```
+**注：在运行安装命令的时候，您可能会遇到“Do you want to continue? [Y/n]”这种情况，这时请输入大写的“Y”并回车来继续下载。**
+
 3.全部安装完成且没有显示报错的情况，就继续输入
 ```bash
 python 2.py
