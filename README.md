@@ -44,6 +44,7 @@ CFLAGS="-O0" pip install lxml
 <details> 
 <summary>详细到幼儿园小朋友也能学会的教程</summary>
 
+
 1.首先下载[Termux](https://github.com/termux/termux-app/releases/tag/v0.118.1) ，找到符合您手机配置的apk文件，下载并安装，接着打开应用，然后输入“termux-setup-storage”并回车(也就是换行符)。执行后，系统会弹出一个权限请求，请点击“允许”来获取存储权限。
 
 2.下载文件2.py，并通过文件管理器获取到这个文件所处的目录位置并复制它备用，在Termux输入：
