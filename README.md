@@ -1,7 +1,8 @@
 # 番茄小说下载器精简版
 >[!IMPORTANT]
 >
->1.各位用户，由于盗api事件的存在，为了保障api开发者和本程序的权益，1.7正式版之后的版本将进入“半开源状态”，也就是除了api和密钥的其他部分开源。
+>1.各位用户，由于盗api事件的存在，为了保障
+api开发者和本程序的权益，1.7正式版之后的版本将进入“半开源状态”，也就是除了api和密钥的其他部分开源。
 >
 >2.如果有带svip的番茄小说账号或番茄API，请在Issues页面里回复我，这我们十分重要！
 
@@ -45,9 +46,10 @@ CFLAGS="-O0" pip install lxml
 <summary>详细到幼儿园小朋友也能学会的教程
 </summary>
 
-1.首先下载[Termux](https://github.com/termux/termux-app/releases/tag/v0.118.1) ，找到符合您手机配置的apk文件，下载并安装，接着打开应用，然后输入“termux-setup-storage”并回车(也就是换行符)。执行后，系统会弹出一个权限请求，请点击“允许”来获取存储权限。
+- 1.首先下载[Termux]
+(https://github.com/termux/termux-app/releases/tag/v0.118.1) ，找到符合您手机配置的apk文件，下载并安装，接着打开应用，然后输入“termux-setup-storage”并回车(也就是换行符)。执行后，系统会弹出一个权限请求，请点击“允许”来获取存储权限。
 
-2.下载文件2.py，并通过文件管理器获取到这个文件所处的目录位置并复制它备用，在Termux输入：
+- 2.下载文件2.py，并通过文件管理器获取到这个文件所处的目录位置并复制它备用，在Termux输入：
 `cd+空格+复制的目录`
 然后回车。
 
@@ -58,7 +60,7 @@ CFLAGS="-O0" pip install lxml
 >如果你说：“啊？这些英文加斜杠是什么意思啊？我该在哪里找到它呀？”像这种伸手党的问题，这里不予解释，请参考下面的智慧提问思维导图：
 > ![d076202f80bb19bd](https://github.com/user-attachments/assets/dbbc57b3-9974-48b3-8fc8-35dce1f72059)
 
-3.在Termux中依次输入安装命令并回车运行：
+- 3.在Termux中依次输入安装命令并回车运行：
 ```bash
 sed -i 's@^\(deb.*stable main\)$@#\1\ndeb https://mirrors.tuna.tsinghua.edu.cn/termux/apt/termux-main stable main@' $PREFIX/etc/apt/sources.list
 ```
@@ -73,7 +75,7 @@ pip install requests beautifulsoup4 urllib3 stem tqdm fake-useragent pycryptodom
 ```
 **注：在运行安装命令的时候，您可能会遇到“Do you want to continue? [Y/n]”这种情况，这时请输入大写的“Y”并回车来继续下载。**
 
-3.全部安装完成且没有显示报错的情况，就继续输入
+- 4.全部安装完成且没有显示报错的情况，就继续输入
 ```bash
 python 2.py
 ```
