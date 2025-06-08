@@ -15,7 +15,7 @@ api开发者和本程序的权益，1.7正式版之后的版本将进入“半�
 sed -i 's@^\(deb.*stable main\)$@#\1\ndeb https://mirrors.tuna.tsinghua.edu.cn/termux/apt/termux-main stable main@' $PREFIX/etc/apt/sources.list
 apt update && apt upgrade
 pkg install python
-pip install requests beautifulsoup4 urllib3 stem tqdm fake-useragent pycryptodome
+pip install requests beautifulsoup4 urllib3 stem tqdm lxml fake-useragent pycryptodome
 ```
 ## 常见问题
 1.`此程序的优势在哪？`
@@ -73,7 +73,7 @@ pkg install python
 pkg install python-pip
 ```
 ```
-pip install requests beautifulsoup4 urllib3 stem tqdm fake-useragent pycryptodome
+pip install requests beautifulsoup4 urllib3 stem tqdm lxml fake-useragent pycryptodome
 ```
 **注：
 1.在运行安装命令的时候，您可能会遇到“Do you want to continue? [Y/n]”这种情况，这时请输入大写的“Y”并回车来继续下载。**
