@@ -23,7 +23,6 @@ pip install requests beautifulsoup4 urllib3 stem tqdm fake-useragent pycryptodom
 本程序的初衷就是极致简化番茄小说下载器的代码，使程序更加易于操作与运行、更加稳定和快速，并且全平台通用，小白也能轻松上手！
 
 2.`为什么我在安装lxml库的时候始终安装不了？`
-**(适用于旧版本)**
 
 按照以下步骤解决：
 ```bash
@@ -76,7 +75,25 @@ pkg install python-pip
 ```
 pip install requests beautifulsoup4 urllib3 stem tqdm fake-useragent pycryptodome
 ```
-**注：在运行安装命令的时候，您可能会遇到“Do you want to continue? [Y/n]”这种情况，这时请输入大写的“Y”并回车来继续下载。**
+**注：
+1.在运行安装命令的时候，您可能会遇到“Do you want to continue? [Y/n]”这种情况，这时请输入大写的“Y”并回车来继续下载。**
+**2.如果您在安装lxml库时显示报错，那么就依次运行以下命令：**
+```bash
+apt install clang 
+```
+```
+apt install libxml2
+```
+```
+apt install libxslt 
+```
+```
+pip install cython 
+```
+```
+CFLAGS="-O0" pip install lxml
+```
+**然后再次运行第3步的第3个命令即可。**
 
 - 4.全部安装完成且没有显示报错的情况，就继续输入
 ```bash
