@@ -42,7 +42,7 @@ CFLAGS="-O0" pip install lxml
 
 （先运行安装命令后再进行以上操作）
 
-<details> 
+<details>
 <summary>详细到幼儿园小朋友也能学会的教程(点击展开查看)
 </summary>
 
@@ -106,7 +106,17 @@ python 2.py
 
 6.`我是纯小白，2.py代码在哪里下载啊`
 
-直接点击此链接(https://github.com/Dlmily/Tomato-Novel-Downloader-Lite/releases/ )先找到最新版本，然后在最新版本中找到”Assets”并点击来展开内容(如果已展开就不必进行此操作)。在展开的内容中找到2.py代码，点击下载即可
+直接点击此链接(https://github.com/Dlmily/Tomato-Novel-Downloader-Lite/releases/ )先找到最新版本，然后在最新版本中找到”Assets”并点击来展开内容(如果已展开就不必进行此操作)。在展开的内容中找到2.py代码，点击下载即可。
+<details>
+<summary>第2种下载方案(点击展开查看)
+</summary>
+
+![Screenshot_20250608-204406](https://github.com/user-attachments/assets/5357457c-92d8-4b15-af38-6cdad23c57a1)
+
+![Screenshot_20250608-204442](https://github.com/user-attachments/assets/2d349eb3-8b3b-44a6-9188-264b7fbb658f)
+
+![Screenshot_20250608-204456](https://github.com/user-attachments/assets/cd50b5b8-a07b-4f44-b46c-e8f2e8ea8008)
+</details>
 
 7.`我无法正常运行代码，有没有可执行文件代替？`
 
