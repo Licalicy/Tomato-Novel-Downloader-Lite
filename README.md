@@ -111,9 +111,13 @@ python 2.py
 <summary>第2种下载方案(点击展开查看)
 </summary>
 
+- 第一步
+  
 ![Screenshot_20250608-204406](https://github.com/user-attachments/assets/5357457c-92d8-4b15-af38-6cdad23c57a1)
+- 第二步
 
 ![Screenshot_20250608-204442](https://github.com/user-attachments/assets/2d349eb3-8b3b-44a6-9188-264b7fbb658f)
+- 第三步
 
 ![Screenshot_20250608-204456](https://github.com/user-attachments/assets/cd50b5b8-a07b-4f44-b46c-e8f2e8ea8008)
 </details>
