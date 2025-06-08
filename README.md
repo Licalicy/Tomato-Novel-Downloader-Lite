@@ -43,7 +43,7 @@ CFLAGS="-O0" pip install lxml
 （先运行安装命令后再进行以上操作）
 
 <details> 
-<summary>详细到幼儿园小朋友也能学会的教程
+<summary>详细到幼儿园小朋友也能学会的教程(点击展开查看)
 </summary>
 
 - 1.首先下载[Termux]
