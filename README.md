@@ -51,6 +51,7 @@ python 2.py
 
 <details>
 <summary>电脑端(点击展开查看)</summary>
+   
 ### Windows系统
 1. **安装Python**
    - 访问[Python官网](https://www.python.org/downloads/)下载最新版本
