@@ -13,8 +13,7 @@ api开发者和本程序的权益，1.7正式版之后的版本将进入“半�
 <details>
 <summary>手机端(点击展开查看)</summary>
 
-- 1.首先下载[Termux]
-(https://github.com/termux/termux-app/releases/tag/v0.118.1) ，找到符合您手机配置的apk文件(如果你的手机是在2020年以后购买的，那就选择带有arm64文件名的apk)，下载并安装，接着打开应用，然后输入“termux-setup-storage”并回车(也就是换行符)。执行后，系统会弹出一个权限请求，请点击“允许”来获取存储权限。
+- 1.首先下载[Termux](https://github.com/termux/termux-app/releases/tag/v0.118.1 ) ，找到符合您手机配置的apk文件(如果你的手机是在2020年以后购买的，那就选择带有arm64文件名的apk)，下载并安装，接着打开应用，然后输入“termux-setup-storage”并回车(也就是换行符)。执行后，系统会弹出一个权限请求，请点击“允许”来获取存储权限。
 
 - 2.下载文件2.py，并通过文件管理器获取到这个文件所处的目录位置并复制它备用，在Termux输入：
 `cd+空格+复制的目录`
