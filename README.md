@@ -10,44 +10,8 @@ api开发者和本程序的权益，1.7正式版之后的版本将进入“半�
 
 如你所见，这个程序只有不到25kb的python文件，但这不影响它的功能！这个程序简单易操作，可以满足你的小说下载需求，需要运行此程序的话，最好是在终端中，以下的所有需要输入的内容都需要在终端中进行，并且在使用此程序之前，您必须先安装python！
 ## 我该如何使用？
-你可以通过输入书籍id以及需要保存的路径来进行下载
-你还需要依次输入以下的命令来保证程序的运行：
-(电脑端只需要运行以下命令的第3、4个即可)
-```bash
-sed -i 's@^\(deb.*stable main\)$@#\1\ndeb https://mirrors.tuna.tsinghua.edu.cn/termux/apt/termux-main stable main@' $PREFIX/etc/apt/sources.list
-apt update && apt upgrade
-pkg install python
-pip install requests beautifulsoup4 urllib3 stem tqdm fake-useragent pycryptodome
-```
-## 常见问题
-1.`此程序的优势在哪？`
-
-本程序的初衷就是极致简化番茄小说下载器的代码，使程序更加易于操作与运行、更加稳定和快速，并且全平台通用，小白也能轻松上手！
-
-2.`为什么我在安装lxml库的时候始终安装不了？`
-
-**(适用于旧版本)**
-
-按照以下步骤解决：
-```bash
-apt install clang 
-apt install libxml2
-apt install libxslt 
-pip install cython 
-CFLAGS="-O0" pip install lxml
-```
-
-3.`手机端该如何运行？`
-
-首先下载termux(链接:(https://github.com/termux/termux-app/releases/tag/v0.118.1 )，用文件管理器，找到自己下载的源代码(2.py)，复制当前的目录，返回termux，输入cd+空格+复制的目录，然后回车，最后输入`python 2.py`
-
-再次回车即可。
-
-（先运行安装命令后再进行以上操作）
-
 <details>
-<summary>详细到幼儿园小朋友也能学会的教程(点击展开查看)
-</summary>
+<summary>手机端(点击展开查看)</summary>
 
 - 1.首先下载[Termux]
 (https://github.com/termux/termux-app/releases/tag/v0.118.1) ，找到符合您手机配置的apk文件(如果你的手机是在2020年以后购买的，那就选择带有arm64文件名的apk)，下载并安装，接着打开应用，然后输入“termux-setup-storage”并回车(也就是换行符)。执行后，系统会弹出一个权限请求，请点击“允许”来获取存储权限。
@@ -56,12 +20,9 @@ CFLAGS="-O0" pip install lxml
 `cd+空格+复制的目录`
 然后回车。
 
-> [提示]
+> [Tip]
 >
 > 文件所处的目录位置就是下载的文件所在的地方，比如我下载了一个文件，这个文件就会显示在文件管理器中，但是该在哪里寻找它呢？要寻找的这个地方就是文件所处的目录，假如我下载的这个文件位置在“/storage/emulated/0/Download/”里，那么这个文件的位置就是这个文件所处的目录。
-> 
->如果你说：“啊？这些英文加斜杠是什么意思啊？我该在哪里找到它呀？”像这种伸手党的问题，这里不予解释，请参考下面的智慧提问思维导图：
-> ![d076202f80bb19bd](https://github.com/user-attachments/assets/dbbc57b3-9974-48b3-8fc8-35dce1f72059)
 
 - 3.在Termux中依次输入安装命令并回车运行：
 ```bash
@@ -88,27 +49,122 @@ python 2.py
 并回车来启动程序即可
 </details>
 
-4.`电脑端该如何运行？`
+<details>
+<summary>电脑端(点击展开查看)</summary>
+### Windows系统
+1. **安装Python**
+   - 访问[Python官网](https://www.python.org/downloads/)下载最新版本
+   - 安装时务必勾选"Add Python to PATH"选项
 
-步骤是和手机端差不多的，
-先查看下载的2.py代码的目录位置，返回终端后输入：cd+空格+复制的目录，然后回车，最后再输入`python 2.py`
+2. **下载脚本文件**
+   - 从[GitHub Releases页面](https://github.com/Dlmily/Tomato-Novel-Downloader-Lite/releases/)下载最新版本的2.py文件
+   - 记住文件的保存路径
 
-再次回车即可。
+3. **安装依赖库**
+   - 打开命令提示符(CMD)或PowerShell
+   - 输入以下命令安装所需库：
+     ```bash
+     pip install requests beautifulsoup4 urllib3 stem tqdm fake-useragent pycryptodome
+     ```
 
-**注意**：如果要切换到有空格的目录中，您需要使用引号来引起来：
+4. **运行程序**
+   - 在命令提示符中导航到脚本所在目录：
+     ```bash
+     cd 你的文件路径
+     ```
+   - 运行程序：
+     ```bash
+     python 2.py
+     ```
 
-> cd+空格+"复制的目录"
+### macOS系统
+1. **安装Python**
+   - 推荐使用Homebrew安装：
+     ```bash
+     brew install python
+     ```
+   - 或从Python官网下载安装包
 
-**注意**：请确保您要运行的2.py文件与当前工作目录位于同一驱动器（例如D盘）。如果2.py文件位于其他驱动器，请先切换到该驱动器。您可以通过输入驱动器名称加冒号(例如【D:】)并按回车键来切换驱动器。
+2. **下载脚本文件**
+   - 同Windows步骤
 
-（先运行安装命令后再进行以上操作）
+3. **安装依赖库**
+   - 打开终端(Terminal)
+   - 输入以下命令：
+     ```bash
+     pip3 install requests beautifulsoup4 urllib3 stem tqdm fake-useragent pycryptodome
+     ```
 
-5.`小说id是什么？在哪里获取？`
+4. **运行程序**
+   - 在终端中导航到脚本目录：
+     ```bash
+     cd 你的文件路径
+     ```
+   - 运行程序：
+     ```bash
+     python3 2.py
+     ```
+
+### Linux系统
+1. **安装Python**
+   - 大多数Linux发行版已预装Python，可通过以下命令检查：
+     ```bash
+     python3 --version
+     ```
+   - 如需安装：
+     ```bash
+     sudo apt-get install python3  # Debian/Ubuntu
+     sudo yum install python3      # CentOS/RHEL
+     ```
+
+2. **下载脚本文件**
+   - 同Windows步骤
+
+3. **安装依赖库**
+   - 打开终端
+   - 输入以下命令：
+     ```bash
+     pip3 install requests beautifulsoup4 urllib3 stem tqdm fake-useragent pycryptodome
+     ```
+
+4. **运行程序**
+   - 导航到脚本目录：
+     ```bash
+     cd 你的文件路径
+     ```
+   - 运行程序：
+     ```bash
+     python3 2.py
+     ```
+
+**注：**
+- 如果遇到权限问题，可在命令前加上“sudo”(Linux/macOS可用)或以管理员身份运行CMD(PowerShell)
+</details>
+
+## 常见问题
+1.`此程序的优势在哪？`
+
+本程序的初衷就是极致简化番茄小说下载器的代码，使程序更加易于操作与运行、更加稳定和快速，并且全平台通用，小白也能轻松上手！
+
+2.`为什么我在安装lxml库的时候始终安装不了？`
+
+**(适用于旧版本)**
+
+按照以下步骤解决：
+```bash
+apt install clang 
+apt install libxml2
+apt install libxslt 
+pip install cython 
+CFLAGS="-O0" pip install lxml
+```
+
+3.`小说id是什么？在哪里获取？`
 
 首先你需要找到自己想下载的小说的详情页(例如https://fanqienovel.com/page/7143038691944959011 )，链接中“7143038691944959011”就是小说id
 >**注意：详情页链接一定是“https://fanqienovel.com/page/小说id ”这样的。如果不对就继续寻找！或者如果您是手机端，那么就访问主页“https://fanqienovel.com/ ”再在浏览器中寻找并点击“查看桌面网站”选项，然后在主页的右上角找到搜索框，搜索你要下载书籍的名字，搜索完成后找到对应的书籍名并点击它来查看详情页，接着复制当前详情页的网页链接就可以找到小说id了**
 
-6.`我是纯小白，2.py代码在哪里下载啊`
+4.`我是纯小白，2.py代码在哪里下载啊`
 
 直接点击此链接(https://github.com/Dlmily/Tomato-Novel-Downloader-Lite/releases/ )先找到最新版本，然后在最新版本中找到”Assets”并点击来展开内容(如果已展开就不必进行此操作)。在展开的内容中找到2.py代码，点击下载即可。
 <details>
@@ -126,17 +182,17 @@ python 2.py
 ![Screenshot_20250608-204456](https://github.com/user-attachments/assets/cd50b5b8-a07b-4f44-b46c-e8f2e8ea8008)
 </details>
 
-7.`我无法正常运行代码，有没有可执行文件代替？`
+5.`我无法正常运行代码，有没有可执行文件代替？`
 
 [点击此处跳转到可执行文件安装页面](https://github.com/Dlmily/Tomato-Novel-Downloader-Lite/releases)
 
 然后再重新尝试
 
-8.`怎么中断程序？`
+6.`怎么中断程序？`
 
 Ctrl+C中断程序（先按Ctrl再按C，多试几次就能中断程序了
 
-9.`Tor网络怎么使用`
+7.`Tor网络怎么使用`
 
 手机端：
 首先下载“Orbot”，安装完成后打开，点击“配置连接方式”，在弹出的页面中点击“询问TOR”，程序会自动为您匹配最适合当前地区的连接方式，然后点击“连接”，等待即可。当然如果你要将TOR网络流量集中的话，连接完成后点击“选择应用”，在弹出的应用列表中勾选“Termux”，然后保存即可。
