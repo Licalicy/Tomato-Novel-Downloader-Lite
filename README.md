@@ -294,7 +294,7 @@ Ctrl+C中断程序（先按Ctrl再按C，多试几次就能中断程序了
 <details> 
 <summary>爱发电/支付宝赞助</summary>
 
-![Screenshot_20250603-212900](https://github.com/user-attachments/assets/be19f902-b5fc-4ee6-8d6c-f65fd499ae42)
+- [爱发电](https://github.com/Dlmily/ImageToMiBand7 )
 
 ![IMG_20250603_211957](https://github.com/user-attachments/assets/aca33677-cc92-4fb1-acc3-e7bf600d028e)
 
