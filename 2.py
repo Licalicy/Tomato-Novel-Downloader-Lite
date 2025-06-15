@@ -147,7 +147,7 @@ CONFIG = {
         "token": None,
         "max_batch_size": 290,
         "timeout": 10,
-        "enabled": False
+        "enabled": True
     }
 }
 
@@ -188,25 +188,24 @@ def fetch_api_endpoints_from_server():
             
             CONFIG["api_endpoints"] = []
             
-            for source in sources:
-                if source["enabled"]:
-                    # 添加到API端点列表
+        for source in sources:
+            if source["enabled"]:
+                # 配置批量下载
+                if source["name"] == CONFIG["batch_config"]["name"]:
+                    base_url = source["single_url"].split('?')[0]
+                    batch_endpoint = base_url.split('/')[-1]
+                    base_url = base_url.rsplit('/', 1)[0] if '/' in base_url else base_url
+                    
+                    CONFIG["batch_config"]["base_url"] = base_url
+                    CONFIG["batch_config"]["batch_endpoint"] = f"/{batch_endpoint}"
+                    CONFIG["batch_config"]["token"] = source.get("token", "")
+                    CONFIG["batch_config"]["enabled"] = True
+                else:
+                    # 单章下载
                     CONFIG["api_endpoints"].append({
                         "url": source["single_url"],
                         "name": source["name"]
                     })
-                    
-                    # 检查是否支持批量下载
-                    if source["name"] == CONFIG["batch_config"]["name"]:
-                        base_url = source["single_url"].split('?')[0]
-                        batch_endpoint = base_url.split('/')[-1]
-                        base_url = base_url.rsplit('/', 1)[0] if '/' in base_url else base_url
-                        
-                        # 配置批量下载
-                        CONFIG["batch_config"]["base_url"] = base_url
-                        CONFIG["batch_config"]["batch_endpoint"] = f"/{batch_endpoint}"
-                        CONFIG["batch_config"]["token"] = source.get("token", "")
-                        CONFIG["batch_config"]["enabled"] = True
             
             print("成功从服务器获取API列表!")
             return True
@@ -563,10 +562,8 @@ def Run(book_id, save_path):
         lock = threading.Lock()
 
         # 批量下载
-        if (len(todo_chapters) > 100 and 
-            CONFIG["batch_config"]["enabled"] and 
-            any(ep["name"] == "qyuing" for ep in CONFIG["api_endpoints"])):
-            print("检测到大量章节，启用批量下载模式...")
+        if CONFIG["batch_config"]["enabled"]:
+            print("启用批量下载模式...")
             batch_size = CONFIG["batch_config"]["max_batch_size"]
             
             with tqdm(total=len(todo_chapters), desc="批量下载进度") as pbar:
@@ -581,9 +578,7 @@ def Run(book_id, save_path):
                         pbar.update(len(batch))
                         continue
                     
-                    # 处理并写入内容
                     for chap in batch:
-                        # 从结果中获取内容
                         content = batch_results.get(chap["id"], "")
                         if isinstance(content, dict):
                             content = content.get("content", "")
@@ -608,47 +603,50 @@ def Run(book_id, save_path):
             write_downloaded_chapters_in_order()
             save_status(save_path, downloaded)
 
-        # 单章下载
-        def download_task(chapter):
-            nonlocal success_count
-            try:
-                title, content = down_text(chapter["id"], headers, book_id)
-                if content:
-                    with lock:
-                        chapter_results[chapter["index"]] = {
-                            "base_title": chapter["title"],
-                            "api_title": title,
-                            "content": content
-                        }
-                        downloaded.add(chapter["id"])
-                        success_count += 1
-                else:
+        # 如果err单章下载
+        if todo_chapters:
+            print(f"开始单章下载模式，剩余 {len(todo_chapters)} 个章节...")
+            
+            def download_task(chapter):
+                nonlocal success_count
+                try:
+                    title, content = down_text(chapter["id"], headers, book_id)
+                    if content:
+                        with lock:
+                            chapter_results[chapter["index"]] = {
+                                "base_title": chapter["title"],
+                                "api_title": title,
+                                "content": content
+                            }
+                            downloaded.add(chapter["id"])
+                            success_count += 1
+                    else:
+                        with lock:
+                            failed_chapters.append(chapter)
+                except Exception as e:
+                    print(f"章节 {chapter['id']} 下载失败: {str(e)}")
                     with lock:
                         failed_chapters.append(chapter)
-            except Exception as e:
-                print(f"章节 {chapter['id']} 下载失败: {str(e)}")
-                with lock:
-                    failed_chapters.append(chapter)
 
-        attempt = 1
-        while todo_chapters:
-            print(f"\n第 {attempt} 次尝试，剩余 {len(todo_chapters)} 个章节...")
-            attempt += 1
-            
-            with ThreadPoolExecutor(max_workers=CONFIG["max_workers"]) as executor:
-                futures = [executor.submit(download_task, ch) for ch in todo_chapters]
+            attempt = 1
+            while todo_chapters:
+                print(f"\n第 {attempt} 次尝试，剩余 {len(todo_chapters)} 个章节...")
+                attempt += 1
                 
-                with tqdm(total=len(todo_chapters), desc="单章下载进度") as pbar:
-                    for _ in as_completed(futures):
-                        pbar.update(1)
-            
-            write_downloaded_chapters_in_order()
-            save_status(save_path, downloaded)
-            todo_chapters = failed_chapters.copy()
-            failed_chapters = []
-            
-            if todo_chapters:
-                time.sleep(1)
+                with ThreadPoolExecutor(max_workers=CONFIG["max_workers"]) as executor:
+                    futures = [executor.submit(download_task, ch) for ch in todo_chapters]
+                    
+                    with tqdm(total=len(todo_chapters), desc="单章下载进度") as pbar:
+                        for _ in as_completed(futures):
+                            pbar.update(1)
+                
+                write_downloaded_chapters_in_order()
+                save_status(save_path, downloaded)
+                todo_chapters = failed_chapters.copy()
+                failed_chapters = []
+                
+                if todo_chapters:
+                    time.sleep(1)
 
         print(f"下载完成！成功下载 {success_count} 个章节")
 
