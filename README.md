@@ -323,7 +323,7 @@ Ctrl+C中断程序（先按Ctrl再按C，多试几次就能中断程序了
 
 感谢来自Github用户@jingluopro的api！
 
-感谢来自谷歌邮箱用户@Deivid Zubi的api！
+感谢来自Gmail用户@Deivid Zubi的api！
 
 感谢来自Telegram用户@_ lnb_x_的api！
 
