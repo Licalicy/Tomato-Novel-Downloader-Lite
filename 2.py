@@ -9,9 +9,6 @@ import urllib3
 import threading
 import signal
 import sys
-import stem
-from stem import Signal
-from stem.control import Controller
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
 from collections import OrderedDict
@@ -27,108 +24,6 @@ from urllib.parse import urlencode
 # 禁用SSL证书验证警告
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 requests.packages.urllib3.disable_warnings()
-
-# 添加Tor配置
-TOR_CONFIG = {
-    "enabled": False,
-    "proxy_port": 9050,
-    "max_retries": 3,
-    "change_ip_after": 980,
-    "request_timeout": 35
-}
-
-# 初始化请求计数器
-request_counter = 0
-
-def get_tor_session():
-    """创建新的Tor会话"""
-    session = requests.session()
-    session.proxies = {
-        'http': f'socks5h://127.0.0.1:{TOR_CONFIG["proxy_port"]}',
-        'https': f'socks5h://127.0.0.1:{TOR_CONFIG["proxy_port"]}'
-    }
-    return session
-
-def renew_tor_ip():
-    """重建会话"""
-    if not TOR_CONFIG["enabled"]:
-        return
-        
-    print("正在重建Tor会话更换IP...")
-    global request_counter
-    request_counter = 0
-    time.sleep(5)
-    print("IP更换完成")
-
-def check_tor_connection():
-    """检查Tor连接是否正常"""
-    try:
-        session = get_tor_session()
-        response = session.get(
-            "https://check.torproject.org/",
-            timeout=TOR_CONFIG["request_timeout"]
-        )
-        if "Congratulations" in response.text:
-            print("Tor连接成功!")
-            return True
-    except Exception as e:
-        print(f"Tor连接检查失败: {str(e)}")
-    return False
-
-def enable_tor_support():
-    """启用Tor支持"""
-    TOR_CONFIG["enabled"] = True
-    print("正在启用Tor支持...")
-    if check_tor_connection():
-        print("Tor支持已启用!")
-        return True
-    else:
-        print("无法连接到Tor网络，请确保Tor服务正在运行，将使用其他下载渠道进行下载\n")
-        TOR_CONFIG["enabled"] = False
-        return False
-
-def make_request(url, headers=None, params=None, data=None, method='GET', verify=False, use_tor=False, timeout=None):
-    """通用的请求函数"""
-    global request_counter
-    
-    if headers is None:
-        headers = get_headers()
-    
-    session = None
-    if use_tor and TOR_CONFIG["enabled"]:
-        session = get_tor_session()
-        # 计数器逻辑
-        request_counter += 1
-        if request_counter % TOR_CONFIG["change_ip_after"] == 0:
-            renew_tor_ip()
-    else:
-        session = requests.Session()
-    
-    try:
-        request_params = {
-            'headers': headers,
-            'params': params,
-            'verify': verify,
-            'timeout': timeout if timeout is not None else TOR_CONFIG["request_timeout"]
-        }
-        
-        if data:
-            request_params['data'] = data
-
-        if method.upper() == 'GET':
-            response = session.get(url, **request_params)
-        elif method.upper() == 'POST':
-            response = session.post(url, **request_params)
-        else:
-            raise ValueError(f"不支持的HTTP方法: {method}")
-        
-        return response
-    except Exception as e:
-        print(f"请求失败: {str(e)}")
-        if use_tor and TOR_CONFIG["enabled"]:
-            renew_tor_ip()
-            return make_request(url, headers, params, data, method, verify, use_tor, timeout)
-        raise
 
 # 全局配置
 CONFIG = {
@@ -150,6 +45,35 @@ CONFIG = {
         "enabled": True
     }
 }
+
+def make_request(url, headers=None, params=None, data=None, method='GET', verify=False, timeout=None):
+    """通用的请求函数"""
+    if headers is None:
+        headers = get_headers()
+    
+    try:
+        request_params = {
+            'headers': headers,
+            'params': params,
+            'verify': verify,
+            'timeout': timeout if timeout is not None else CONFIG["request_timeout"]
+        }
+        
+        if data:
+            request_params['data'] = data
+
+        session = requests.Session()
+        if method.upper() == 'GET':
+            response = session.get(url, **request_params)
+        elif method.upper() == 'POST':
+            response = session.post(url, **request_params)
+        else:
+            raise ValueError(f"不支持的HTTP方法: {method}")
+        
+        return response
+    except Exception as e:
+        print(f"请求失败: {str(e)}")
+        raise
 
 def get_headers() -> Dict[str, str]:
     """生成随机请求头"""
@@ -265,8 +189,7 @@ def batch_download_chapters(item_ids, headers):
             method='POST',
             data=json.dumps(payload),
             timeout=batch_config["timeout"],
-            verify=False,
-            use_tor=True
+            verify=False
         )
         
         if response.status_code == 200:
@@ -321,7 +244,7 @@ def down_text(chapter_id, headers, book_id=None):
 
     # 顺序尝试API
     for endpoint in CONFIG["api_endpoints"]:
-        current_endpoint = endpoint["url"].format(chapter_id=chapter_id)
+        current_endpoint = endpoint["url"]
         api_name = endpoint["name"]
         
         down_text.api_status[endpoint["url"]]["last_try_time"] = time.time()
@@ -331,34 +254,48 @@ def down_text(chapter_id, headers, book_id=None):
             time.sleep(random.uniform(0.1, 0.5))
             
             start_time = time.time()
-            response = make_request(
-                current_endpoint, 
-                headers=headers.copy(),
-                timeout=CONFIG["request_timeout"],
-                verify=False,
-                use_tor=True
-            )
+            
+            # 处理不同的API请求方式
+            if api_name == "fanqie_sdk":
+                params = endpoint.get("params", {})
+                data = endpoint.get("data", {})
+                data["item_id"] = chapter_id
+                
+                response = make_request(
+                    current_endpoint,
+                    headers=headers.copy(),
+                    params=params,
+                    method='POST',
+                    data=json.dumps(data),
+                    timeout=CONFIG["request_timeout"],
+                    verify=False
+                )
+            else:
+                current_endpoint = endpoint["url"].format(chapter_id=chapter_id)
+                response = make_request(
+                    current_endpoint, 
+                    headers=headers.copy(),
+                    timeout=CONFIG["request_timeout"],
+                    verify=False
+                )
             
             response_time = time.time() - start_time
             down_text.api_status[endpoint["url"]].update({
                 "last_response_time": response_time,
-                "error_count": max(0, down_text.api_status[endpoint["name"]]["error_count"] - 1)
+                "error_count": max(0, down_text.api_status[endpoint["url"]]["error_count"] - 1)
             })
             
             data = response.json()
-            content = data.get("data", {}).get("content", "")
-            chapter_title = data.get("data", {}).get("title", "")
-
-            if api_name == "fqphp" and content:
-                # 处理内容
-                if len(content) > 20:
-                    content = content[:-20]
-                
-                processed_content = process_chapter_content(content)
-                return chapter_title, processed_content
+            
+            # 处理不同的API响应格式
+            if api_name == "fanqie_sdk":
+                content = data.get("data", {}).get("content", "")
+                chapter_title = data.get("data", {}).get("title", "")
+                if content:
+                    processed_content = process_chapter_content(content)
+                    return chapter_title, processed_content
 
             elif api_name == "lsjk" and content:
-                # 处理内容
                 paragraphs = re.findall(r'<p idx="\d+">(.*?)</p>', content)
                 cleaned_content = "\n".join(p.strip() for p in paragraphs if p.strip())
                 formatted_content = '\n'.join('    ' + line if line.strip() else line 
@@ -370,11 +307,11 @@ def down_text(chapter_id, headers, book_id=None):
                 return chapter_title, processed_content
 
             print(f"API返回空内容，继续尝试下一个API...")
-            down_text.api_status[endpoint["name"]]["error_count"] += 1
+            down_text.api_status[endpoint["url"]]["error_count"] += 1
 
         except Exception as e:
             print(f"API请求失败！")
-            down_text.api_status[endpoint["name"]]["error_count"] += 1
+            down_text.api_status[endpoint["url"]]["error_count"] += 1
             time.sleep(3)
 
     print(f"所有API尝试失败，无法下载章节 {chapter_id}")
@@ -663,15 +600,10 @@ def main():
 Github：https://github.com/Dlmily/Tomato-Novel-Downloader-Lite
 赞助/了解新产品：https://afdian.com/a/dlbaokanluntanos
 *使用前须知*：
-    1.开始下载之后，您可能会过于着急而查看下载文件的位置，这是徒劳的，请耐心等待小说下载完成再查看！另外如果你要下载之前已经下载过的小说(在此之前已经删除了原txt文件)，那么你有可能会遇到"所有章节已是最新，无需下载"的情况，这时就请删除掉chapter.json，然后再次运行程序。
-    2.您可以自行选择使用Tor网络进行下载，Tor网络能够很好地防止Api开发者封ip。
+    开始下载之后，您可能会过于着急而查看下载文件的位置，这是徒劳的，请耐心等待小说下载完成再查看！另外如果你要下载之前已经下载过的小说(在此之前已经删除了原txt文件)，那么你有可能会遇到"所有章节已是最新，无需下载"的情况，这时就请删除掉chapter.json，然后再次运行程序。
 
 另：如果有带番茄svip的cookie或api，按照您的意愿投到“Issues”页中。
 ------------------------------------------""")
-    use_tor = input("是否要使用Tor网络进行下载？(y/n, 默认为n): ").strip().lower()
-    if use_tor == 'y':
-        if not enable_tor_support():
-            print("将不使用Tor网络继续运行")
     
     print("正在从服务器获取API列表...")
     fetch_api_endpoints_from_server()
