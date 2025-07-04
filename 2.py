@@ -596,7 +596,7 @@ def Run(book_id, save_path):
 def main():
     print("""欢迎使用番茄小说下载器精简版！
 开发者：Dlmily
-当前版本：v1.7
+当前版本：v1.7.3
 Github：https://github.com/Dlmily/Tomato-Novel-Downloader-Lite
 赞助/了解新产品：https://afdian.com/a/dlbaokanluntanos
 *使用前须知*：
