@@ -295,14 +295,7 @@ Ctrl+C中断程序（先按Ctrl再按C，多试几次就能中断程序了
 
 ~[小米手环七图像转换工具](https://github.com/Dlmily/ImageToMiBand7)
 
-<details> 
-<summary>爱发电/支付宝赞助</summary>
-
-- [爱发电](https://github.com/Dlmily/ImageToMiBand7 )
-
-![IMG_20250603_211957](https://github.com/user-attachments/assets/aca33677-cc92-4fb1-acc3-e7bf600d028e)
-
-</details>
+- [爱发电赞助](https://github.com/Dlmily/ImageToMiBand7 )
 
 > [!NOTE]
 >
