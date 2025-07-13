@@ -192,7 +192,7 @@ CFLAGS="-O0" pip install lxml
 
 6.`怎么中断程序？`
 
-Ctrl+C中断程序（先按Ctrl再按C，多试几次就能中断程序了
+Ctrl+Z中断程序（先按Ctrl再按Z）
 
 7.`Tor网络怎么使用`
 
