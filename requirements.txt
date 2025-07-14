@@ -6,3 +6,5 @@ fake-useragent
 pycryptodome
 stem
 urllib3
+lxml
+ebooklib
