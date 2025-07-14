@@ -59,6 +59,7 @@ python 2.py
 ```
 
 并回车来启动程序即可
+</details>
 
 <details>
 <summary>电脑端(点击展开查看)</summary>
