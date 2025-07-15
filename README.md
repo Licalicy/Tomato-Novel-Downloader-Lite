@@ -195,8 +195,6 @@ python 2.py
 
 2.`为什么我在安装lxml库的时候始终安装不了？`
 
-**(适用于旧版本)**
-
 按照以下步骤解决：
 ```bash
 apt install clang 
