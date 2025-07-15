@@ -58,7 +58,7 @@ def make_request(url, headers=None, params=None, data=None, method='GET', verify
         }
         
         if data:
-            request_params['json'] = data  # 使用 json 参数以正确发送 JSON 数据
+            request_params['json'] = data
 
         session = requests.Session()
         if method.upper() == 'GET':
