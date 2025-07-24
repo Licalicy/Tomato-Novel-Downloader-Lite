@@ -31,7 +31,7 @@ CONFIG = {
     "status_file": "chapter.json",
     "request_rate_limit": 0.4,
     "auth_token": "wcnmd91jb",
-    "server_url": "https://dlbkltos.s7123.xyz:5080/api/sources",
+    "server_url": "http://127.0.0.1:5000/api/sources",
     "api_endpoints": [],
     "batch_config": {
         "name": "qyuing",
@@ -165,7 +165,7 @@ def extract_chapters(soup):
     return chapters
 
 def batch_download_chapters(item_ids, headers):
-    """批量下载章节内容，仅用于qyuing API"""
+    """批量下载章节内容"""
     if not CONFIG["batch_config"]["enabled"] or CONFIG["batch_config"]["name"] != "qyuing":
         print("批量下载功能仅限qyuing API")
         return None
@@ -207,7 +207,17 @@ def process_chapter_content(content):
         return ""
     
     try:
-        paragraphs = re.findall(r'<p idx="\d+">(.*?)</p>', content, re.DOTALL)
+        paragraphs = []
+        if '<p idx=' in content:
+            paragraphs = re.findall(r'<p idx="\d+">(.*?)</p>', content, re.DOTALL)
+        else:
+            paragraphs = content.split('\n')
+        
+        if paragraphs:
+            first_para = paragraphs[0].strip()
+            if not first_para.startswith('    '):
+                paragraphs[0] = '    ' + first_para
+        
         cleaned_content = "\n".join(p.strip() for p in paragraphs if p.strip())
         formatted_content = '\n'.join('    ' + line if line.strip() else line 
                                     for line in cleaned_content.split('\n'))
@@ -218,6 +228,7 @@ def process_chapter_content(content):
         formatted_content = re.sub(r'<[^>]+>', '', formatted_content)
         formatted_content = re.sub(r'\\u003c|\\u003e', '', formatted_content)
         
+        # 压缩多余的空行
         formatted_content = re.sub(r'\n{3,}', '\n\n', formatted_content).strip()
         return formatted_content
     except Exception as e:
@@ -237,6 +248,9 @@ def down_text(chapter_id, headers, book_id=None):
             "last_try_time": 0
         } for endpoint in CONFIG["api_endpoints"]}
 
+    # 记录未成功的id
+    failed_chapter_id = chapter_id
+    
     for idx, endpoint in enumerate(CONFIG["api_endpoints"]):
         current_endpoint = endpoint["url"]
         api_name = endpoint["name"]
@@ -270,7 +284,7 @@ def down_text(chapter_id, headers, book_id=None):
                     verify=False
                 )
             else:
-                current_endpoint = endpoint["url"].format(chapter_id=chapter_id)
+                current_endpoint = endpoint["url"].format(chapter_id=failed_chapter_id)
                 response = make_request(
                     current_endpoint, 
                     headers=headers.copy(),
@@ -291,6 +305,7 @@ def down_text(chapter_id, headers, book_id=None):
                 chapter_title = data.get("data", {}).get("title", "")
                 if content:
                     processed_content = process_chapter_content(content)
+                    processed_content = re.sub(r'^(\s*)', r'    ', processed_content, flags=re.MULTILINE)
                     return chapter_title, processed_content
             elif api_name == "lsjk" and content:
                 paragraphs = re.findall(r'<p idx="\d+">(.*?)</p>', content)
@@ -301,6 +316,13 @@ def down_text(chapter_id, headers, book_id=None):
             elif api_name == "qyuing" and data.get("code") == 0 and content:
                 processed_content = process_chapter_content(content)
                 return chapter_title, processed_content
+            elif api_name == "fqweb":
+                if data.get("data", {}).get("code") in ["0", 0]:
+                    content = data.get("data", {}).get("data", {}).get("content", "")
+                    if content:
+                        processed_content = process_chapter_content(content)
+                        processed_content = re.sub(r'^(\s*)', r'    ', processed_content, flags=re.MULTILINE)                        
+                        return "", processed_content
 
             if not first_error_printed:
                 print(f"API：{api_name}错误，无法下载章节，正在重试")
@@ -590,7 +612,7 @@ def Run(book_id, save_path, file_format='txt'):
                         with lock:
                             failed_chapters.append(chapter)
                 except Exception as e:
-                    print(f"章节 {chapter['id']} 下载失败: {str(e)}")
+                    print(f"章节 {chapter['id']} 下载失败！")
                     with lock:
                         failed_chapters.append(chapter)
 
@@ -625,7 +647,7 @@ def Run(book_id, save_path, file_format='txt'):
 def main():
     print("""欢迎使用番茄小说下载器精简版！
 开发者：Dlmily
-当前版本：v1.7.5
+当前版本：v1.8
 Github：https://github.com/Dlmily/Tomato-Novel-Downloader-Lite
 赞助/了解新产品：https://afdian.com/a/dlbaokanluntanos
 *使用前须知*：
