@@ -167,7 +167,7 @@ python 2.py
    - 输入以下命令：
 
      ```bash
-     pip3 install requests beautifulsoup4 urllib3 stem tqdm fake-useragent pycryptodome lxml ebooklib
+     pip3 install requests beautifulsoup4 urllib3 stem tqdm fake-useragent pycryptodome lxml ebooklib flask-hcaptcha cryptography redis
      ```
 
 4. **运行程序**
