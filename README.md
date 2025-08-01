@@ -10,7 +10,7 @@ api开发者和本程序的权益，1.7正式版之后的版本将进入“半�
 >
 >4.项目开发者有时会玩失踪
 
-如你所见，这个程序只有不到27kb的python文件，但这不影响它的功能！这个程序简单易操作，可以满足你的小说下载需求，需要运行此程序的话，最好是在终端中，以下的所有需要输入的内容都需要在终端中进行，并且在使用此程序之前，您必须先安装python！
+如你所见，这个程序只有不到28kb的python文件，但这不影响它的功能！这个程序简单易操作，可以满足你的小说下载需求，需要运行此程序的话，最好是在终端中，以下的所有需要输入的内容都需要在终端中进行，并且在使用此程序之前，您必须先安装python！
 ## 我该如何使用？
 <details>
 <summary>手机端(点击展开查看)</summary>
@@ -46,7 +46,7 @@ pkg install libxml2 libxslt
 ```
 
 ```
-pip install requests beautifulsoup4 urllib3 stem tqdm fake-useragent pycryptodome lxml ebooklib
+pip install requests beautifulsoup4 urllib3 stem tqdm fake-useragent pycryptodome lxml ebooklib flask-hcaptcha cryptography redis
 ```
 
 **注：在运行安装命令的时候，您可能会遇到“Do you want to continue? \[Y/n\]”这种情况，这时请输入大写的“Y”并回车来继续下载。**
@@ -353,6 +353,8 @@ Ctrl+C中断程序（先按Ctrl再按C，多试几次就能中断程序了）
 ## 感谢
 感谢用户选择此程序，如果喜欢可以加star，想关注版本更新的可以加watching，如果有什么对本程序的建议，请在“Issues”页面提出。您的喜欢就是我更新的最大动力❤️
 ***
+感谢来自Github用户@qxqycb的开源项目！
+
 感谢来自QQ用户@终忆的api！
 
 感谢来自Github用户@s7123studio的服务器支持！
