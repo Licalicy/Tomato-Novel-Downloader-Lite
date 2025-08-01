@@ -31,7 +31,7 @@ CONFIG = {
     "status_file": "chapter.json",
     "request_rate_limit": 0.4,
     "auth_token": "wcnmd91jb",
-    "server_url": "https://dlbkltos.s7123.xyz:5080/api/sources",
+    "server_url": "https://dlbkltos.s7123.xyz:5080",
     "api_endpoints": [],
     "batch_config": {
         "name": "qyuing",
@@ -44,7 +44,7 @@ CONFIG = {
     }
 }
 
-# 全局锁❤️
+# 全局锁
 print_lock = threading.Lock()
 
 def make_request(url, headers=None, params=None, data=None, method='GET', verify=False, timeout=None):
@@ -102,8 +102,38 @@ def fetch_api_endpoints_from_server():
         headers = get_headers()
         headers["X-Auth-Token"] = CONFIG["auth_token"]
         
-        response = requests.get(
-            CONFIG["server_url"],
+        # 获取人机验证url
+        challenge_url = f"{CONFIG['server_url']}/api/get-captcha-challenge"
+        challenge_res = make_request(
+            challenge_url,
+            headers=headers,
+            timeout=10,
+            verify=False
+        )
+        
+        if challenge_res.status_code != 200:
+            with print_lock:
+                print(f"获取人机验证挑战失败: {challenge_res.status_code}")
+            return False
+            
+        challenge_data = challenge_res.json()
+        captcha_url = challenge_data["challenge_url"]
+        
+        with print_lock:
+            print("\n" + "="*50)
+            print("需要进行人机验证才能继续")
+            print("请访问以下链接完成验证:")
+            print(captcha_url)
+            print("="*50 + "\n")
+            
+            verification_token = input("请粘贴验证后获取的令牌: ").strip()
+        
+        # 使用令牌获取api
+        headers["X-Verification-Token"] = verification_token
+        
+        sources_url = f"{CONFIG['server_url']}/api/sources"
+        response = make_request(
+            sources_url,
             headers=headers,
             timeout=10,
             verify=False
@@ -248,7 +278,7 @@ def process_chapter_content(content):
 
 def down_text(chapter_id, headers, book_id=None):
     """下载章节内容"""
-    for idx, endpoint in enumerate(CONFIG["api_endpoints"]):
+    for endpoint in CONFIG["api_endpoints"]:
         current_endpoint = endpoint["url"]
         api_name = endpoint["name"]
         
@@ -280,9 +310,10 @@ def down_text(chapter_id, headers, book_id=None):
                 try:
                     data = response.json()
                     content = data.get("data", {}).get("content", "")
+                    title = data.get("data", {}).get("title", "")
                     if content:
                         processed = process_chapter_content(content)
-                        return data.get("data", {}).get("title", ""), processed
+                        return title, processed
                 except json.JSONDecodeError:
                     continue
 
@@ -298,9 +329,10 @@ def down_text(chapter_id, headers, book_id=None):
                     data = response.json()
                     if data.get("data", {}).get("code") in ["0", 0]:
                         content = data.get("data", {}).get("data", {}).get("content", "")
+                        title = data.get("data", {}).get("data", {}).get("title", "")
                         if content:
                             processed = process_chapter_content(content)
-                            return "", processed
+                            return title, processed
                 except:
                     continue
 
@@ -340,10 +372,10 @@ def down_text(chapter_id, headers, book_id=None):
                         continue
 
         except Exception as e:
-            if idx < len(CONFIG["api_endpoints"]) - 1:
-                with print_lock:
-                    print(f"API {api_name} 请求异常: {str(e)[:50]}...，尝试切换")
-            time.sleep(1)
+            with print_lock:
+                print(f"API {api_name} 请求异常: {str(e)[:50]}...，尝试切换")
+            time.sleep(0.5)
+            continue
     
     with print_lock:
         print(f"章节 {chapter_id} 所有API均失败")
@@ -610,7 +642,9 @@ def Run(book_id, save_path, file_format='txt'):
             def download_task(chapter):
                 nonlocal success_count
                 try:
-                    title, content = down_text(chapter["id"], headers, book_id)
+                    # 为每个章节创建新的headers
+                    fresh_headers = get_headers()
+                    title, content = down_text(chapter["id"], fresh_headers, book_id)
                     if content:
                         with lock:
                             chapter_results[chapter["index"]] = {
@@ -659,7 +693,7 @@ def Run(book_id, save_path, file_format='txt'):
 def main():
     print("""欢迎使用番茄小说下载器精简版！
 开发者：Dlmily
-当前版本：v1.8.1
+当前版本：v1.8.2
 Github：https://github.com/Dlmily/Tomato-Novel-Downloader-Lite
 赞助/了解新产品：https://afdian.com/a/dlbaokanluntanos
 *使用前须知*：
