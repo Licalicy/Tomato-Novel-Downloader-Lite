@@ -46,7 +46,7 @@ pkg install libxml2 libxslt
 ```
 
 ```
-pip install requests beautifulsoup4 urllib3 stem tqdm fake-useragent pycryptodome lxml ebooklib flask-hcaptcha cryptography redis
+pip install requests beautifulsoup4 urllib3 stem tqdm fake-useragent pycryptodome lxml ebooklib
 ```
 
 **注：在运行安装命令的时候，您可能会遇到“Do you want to continue? \[Y/n\]”这种情况，这时请输入大写的“Y”并回车来继续下载。**
@@ -82,7 +82,7 @@ python 2.py
    - 输入以下命令安装所需库：
 
      ```bash
-     pip install requests beautifulsoup4 urllib3 stem tqdm fake-useragent pycryptodome lxml ebooklib flask-hcaptcha cryptography redis
+     pip install requests beautifulsoup4 urllib3 stem tqdm fake-useragent pycryptodome lxml ebooklib
      ```
 
 4. **运行程序**
@@ -122,7 +122,7 @@ python 2.py
    - 输入以下命令：
 
      ```bash
-     pip3 install requests beautifulsoup4 urllib3 stem tqdm fake-useragent pycryptodome lxml ebooklib flask-hcaptcha cryptography redis
+     pip3 install requests beautifulsoup4 urllib3 stem tqdm fake-useragent pycryptodome lxml ebooklib
      ```
 
 4. **运行程序**
@@ -167,7 +167,7 @@ python 2.py
    - 输入以下命令：
 
      ```bash
-     pip3 install requests beautifulsoup4 urllib3 stem tqdm fake-useragent pycryptodome lxml ebooklib flask-hcaptcha cryptography redis
+     pip3 install requests beautifulsoup4 urllib3 stem tqdm fake-useragent pycryptodome lxml ebooklib
      ```
 
 4. **运行程序**
