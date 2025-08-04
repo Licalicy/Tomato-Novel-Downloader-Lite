@@ -148,14 +148,19 @@ def fetch_api_endpoints_from_server():
             for source in sources:
                 if source["enabled"]:
                     if source["name"] == CONFIG["batch_config"]["name"]:
-                        base_url = source["single_url"].split('?')[0]
+                        single_url = source["single_url"]
+                        base_url = single_url.split('?')[0]
                         batch_endpoint = base_url.split('/')[-1]
-                        base_url = base_url.rsplit('/', 1)[0] if '/' in base_url else base_url
+                        base_url = base_url.rsplit('/', 1)[0]
                         
                         CONFIG["batch_config"]["base_url"] = base_url
                         CONFIG["batch_config"]["batch_endpoint"] = f"/{batch_endpoint}"
                         CONFIG["batch_config"]["token"] = source.get("token", "")
                         CONFIG["batch_config"]["enabled"] = True
+                        CONFIG["api_endpoints"].append({
+                            "url": single_url,
+                            "name": source["name"]
+                        })
                     else:
                         endpoint = {"url": source["single_url"], "name": source["name"]}
                         if source["name"] == "fanqie_sdk":
@@ -169,9 +174,11 @@ def fetch_api_endpoints_from_server():
         else:
             with print_lock:
                 print(f"获取API列表失败，状态码: {response.status_code}")
+            return False
     except Exception as e:
         with print_lock:
             print(f"获取API列表异常: {str(e)}")
+        return False
 
 def extract_chapters(soup):
     """解析章节列表"""
@@ -222,7 +229,7 @@ def batch_download_chapters(item_ids, headers):
             url,
             headers=batch_headers,
             method='POST',
-            data=json.dumps(payload),
+            data=payload,
             timeout=batch_config["timeout"],
             verify=False
         )
@@ -312,7 +319,8 @@ def down_text(chapter_id, headers, book_id=None):
                     content = data.get("data", {}).get("content", "")
                     title = data.get("data", {}).get("title", "")
                     if content:
-                        processed = process_chapter_content(content)
+                        processed_content = process_chapter_content(content)
+                        processed = re.sub(r'^(\s*)', r'    ', processed_content, flags=re.MULTILINE)
                         return title, processed
                 except json.JSONDecodeError:
                     continue
@@ -331,7 +339,8 @@ def down_text(chapter_id, headers, book_id=None):
                         content = data.get("data", {}).get("data", {}).get("content", "")
                         title = data.get("data", {}).get("data", {}).get("title", "")
                         if content:
-                            processed = process_chapter_content(content)
+                            processed_content = process_chapter_content(content)
+                            processed = re.sub(r'^(\s*)', r'    ', processed_content, flags=re.MULTILINE)
                             return title, processed
                 except:
                     continue
@@ -596,7 +605,7 @@ def Run(book_id, save_path, file_format='txt'):
         lock = threading.Lock()
 
         if CONFIG["batch_config"]["enabled"] and CONFIG["batch_config"]["name"] == "qyuing":
-            print("启用qyuing API批量下载模式...")
+            print("正在使用qyuing API批量下载！响应慢是正常现象。")
             batch_size = CONFIG["batch_config"]["max_batch_size"]
             
             with tqdm(total=len(todo_chapters), desc="批量下载进度") as pbar:
@@ -642,7 +651,6 @@ def Run(book_id, save_path, file_format='txt'):
             def download_task(chapter):
                 nonlocal success_count
                 try:
-                    # 为每个章节创建新的headers
                     fresh_headers = get_headers()
                     title, content = down_text(chapter["id"], fresh_headers, book_id)
                     if content:
@@ -693,7 +701,7 @@ def Run(book_id, save_path, file_format='txt'):
 def main():
     print("""欢迎使用番茄小说下载器精简版！
 开发者：Dlmily
-当前版本：v1.8.2
+当前版本：v1.8.3
 Github：https://github.com/Dlmily/Tomato-Novel-Downloader-Lite
 赞助/了解新产品：https://afdian.com/a/dlbaokanluntanos
 *使用前须知*：
@@ -703,16 +711,18 @@ Github：https://github.com/Dlmily/Tomato-Novel-Downloader-Lite
 ------------------------------------------""")
     
     print("正在从服务器获取API列表...")
-    fetch_api_endpoints_from_server()
+    if not fetch_api_endpoints_from_server():
+        print("无法获取API列表，请重试！")
+        return
     
     while True:
-        book_id = input("请输入小说ID（输入q退出）：").strip()
+        book_id = input("请输入小说ID (输入q退出)：").strip()
         if book_id.lower() == 'q':
             break
             
-        save_path = input("保存路径（留空为当前目录）：").strip() or os.getcwd()
+        save_path = input("保存路径 (留空为当前目录)：").strip() or os.getcwd()
         
-        file_format = input("请选择下载格式（1: txt, 2: epub）：").strip()
+        file_format = input("请选择下载格式 (1:txt, 2:epub)：").strip()
         if file_format == '1':
             file_format = 'txt'
         elif file_format == '2':
