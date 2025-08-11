@@ -1,0 +1,90 @@
+name: Download Novel from Tomato
+
+on:
+  workflow_dispatch:
+    inputs:
+      novel_id:
+        description: '番茄小说ID'
+        required: true
+        type: string
+
+jobs:
+  download-novel:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests bs4 fake-useragent tqdm urllib3 pycryptodome
+
+      - name: Create novels directory
+        run: mkdir -p novels
+
+      - name: Download Novel
+        run: |
+          # 修改爬虫程序以适应自动化运行
+          cat > auto_download.py << 'EOF'
+          import sys
+          import os
+          import importlib.util
+          from datetime import datetime
+          
+          # 动态导入2.py模块
+          spec = importlib.util.spec_from_file_location("novel_downloader", "2.py")
+          novel_downloader = importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(novel_downloader)
+          Run = novel_downloader.Run
+          
+          def is_novel_downloaded(book_id, log_file):
+              if not os.path.exists(log_file):
+                  return False
+              with open(log_file, 'r', encoding='utf-8') as f:
+                  return book_id in f.read()
+          
+          if __name__ == "__main__":
+              if len(sys.argv) < 2:
+                  print("请提供小说ID")
+                  sys.exit(1)
+              
+              book_id = sys.argv[1]
+              save_path = os.path.join(os.getcwd(), "novels")
+              log_file = os.path.join(save_path, "downloaded_ids.log")
+              
+              if is_novel_downloaded(book_id, log_file):
+                  print(f"小说ID {book_id} 已经下载过，跳过下载")
+                  sys.exit(0)
+              
+              print(f"开始下载小说ID: {book_id}")
+              print(f"保存路径: {save_path}")
+              
+              try:
+                  Run(book_id, save_path)
+                  with open(log_file, "a", encoding="utf-8") as log:
+                      log.write(f"{book_id}\n")
+                  print(f"小说ID {book_id} 下载完成")
+              except Exception as e:
+                  print(f"下载失败: {str(e)}")
+                  sys.exit(1)
+          EOF
+          
+          # 执行下载
+          python auto_download.py ${{ github.event.inputs.novel_id }}
+
+          # 清理临时文件
+          rm -f novels/chapter.json
+
+      - name: Commit and Push
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add novels/
+          git commit -m "下载小说: ID ${{ github.event.inputs.novel_id }}" || echo "No changes to commit"
+          git push
